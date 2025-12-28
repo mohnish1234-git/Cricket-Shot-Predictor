@@ -12,18 +12,18 @@ async function predict() {
 
   result.innerText = "Predicting...";
 
-  try {
-    const response = await fetch("/api/predict", {
-      method: "POST",
-      body: formData
-    });
+  const response = await fetch("/api/predict", {
+    method: "POST",
+    body: formData
+  });
 
-    const data = await response.json();
-
-    result.innerText =
-      `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
-
-  } catch (err) {
-    result.innerText = "Prediction failed";
+  if (!response.ok) {
+    result.innerText = "Prediction failed (server error)";
+    return;
   }
+
+  const data = await response.json();
+
+  result.innerText =
+    `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
 }
