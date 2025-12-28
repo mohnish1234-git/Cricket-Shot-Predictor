@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Cricket Shot Predictor</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div class="container">
   <h1>🏏 Cricket Shot Predictor</h1>
 
-  <input type="file" id="imageInput" accept="image/*" />
+  <input type="file" id="imageInput" accept="image/jpeg,image/jpg">
   <button onclick="predict()">Predict Shot</button>
 
-  <div id="result" class="result"></div>
-</div>
+  <p id="result"></p>
 
-<script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
