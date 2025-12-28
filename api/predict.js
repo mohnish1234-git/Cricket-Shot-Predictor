@@ -1,5 +1,9 @@
 export const config = {
-  api: { bodyParser: false }
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb"
+    }
+  }
 };
 
 export default async function handler(req, res) {
@@ -14,15 +18,16 @@ export default async function handler(req, res) {
     }
 
     const buffer = Buffer.concat(chunks);
-
-    const formData = new FormData();
-    formData.append("file", new Blob([buffer]), "image.jpg");
+    const base64Image = buffer.toString("base64");
 
     const rfResponse = await fetch(
       `https://classify.roboflow.com/cricket-shot-type/1?api_key=${process.env.ROBOFLOW_API_KEY}`,
       {
         method: "POST",
-        body: formData
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: base64Image
       }
     );
 
@@ -40,6 +45,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 }
