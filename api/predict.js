@@ -1,6 +1,3 @@
-import fetch from "node-fetch";
-import FormData from "form-data";
-
 export const config = {
   api: {
     bodyParser: false
@@ -20,34 +17,30 @@ export default async function handler(req, res) {
     const imageBuffer = Buffer.concat(chunks);
 
     const formData = new FormData();
-    formData.append("file", imageBuffer, "image.jpg");
-    formData.append("model_id", "cricket-shot-type/1");
+    formData.append(
+      "file",
+      new Blob([imageBuffer]),
+      "image.jpg"
+    );
 
     const response = await fetch(
-      "https://serverless.roboflow.com/infer/workflows/classification",
+      `https://classify.roboflow.com/cricket-shot-type/1?api_key=${process.env.ROBOFLOW_API_KEY}`,
       {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.ROBOFLOW_API_KEY}`
-        },
         body: formData
       }
     );
 
     const data = await response.json();
 
-    if (!data.predictions || data.predictions.length === 0) {
-      return res.status(500).json({ error: "No predictions returned" });
-    }
-
     const top = data.predictions[0];
 
-    return res.json({
+    res.json({
       shot: top.class,
       confidence: top.confidence
     });
 
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 }
