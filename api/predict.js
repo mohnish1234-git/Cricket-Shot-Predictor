@@ -1,6 +1,3 @@
-import fetch from "node-fetch";
-import FormData from "form-data";
-
 export const config = {
   api: { bodyParser: false }
 };
@@ -18,22 +15,21 @@ export default async function handler(req, res) {
 
     const buffer = Buffer.concat(chunks);
 
-    const form = new FormData();
-    form.append("file", buffer, "image.jpg");
+    const formData = new FormData();
+    formData.append("file", new Blob([buffer]), "image.jpg");
 
     const rfResponse = await fetch(
-      "https://classify.roboflow.com/cricket-shot-type/1?api_key=" +
-        process.env.ROBOFLOW_API_KEY,
+      `https://classify.roboflow.com/cricket-shot-type/1?api_key=${process.env.ROBOFLOW_API_KEY}`,
       {
         method: "POST",
-        body: form
+        body: formData
       }
     );
 
     const data = await rfResponse.json();
 
     if (!data.predictions || data.predictions.length === 0) {
-      return res.status(500).json({ error: "No predictions" });
+      return res.status(500).json({ error: "No predictions returned" });
     }
 
     const top = data.predictions[0];
