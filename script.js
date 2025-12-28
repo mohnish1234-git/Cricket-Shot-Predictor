@@ -1,24 +1,50 @@
-async function predict() {
-  const fileInput = document.getElementById("imageInput");
-  const result = document.getElementById("result");
+import fetch from "node-fetch";
+import FormData from "form-data";
 
-  if (!fileInput.files.length) {
-    result.innerText = "Please upload an image";
-    return;
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const formData = new FormData();
-  formData.append("file", fileInput.files[0]);
+  try {
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const imageBuffer = Buffer.concat(chunks);
 
-  result.innerText = "Predicting...";
+    const formData = new FormData();
+    formData.append("file", imageBuffer, "image.jpg");
 
-  const response = await fetch("/api/predict", {
-    method: "POST",
-    body: formData
-  });
+    const response = await fetch(
+      "https://classify.roboflow.com/cricket-shot-type/1?api_key=" +
+        process.env.ROBOFLOW_API_KEY,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
 
-  const data = await response.json();
+    const data = await response.json();
 
-  result.innerText =
-    `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+    if (!data.predictions || data.predictions.length === 0) {
+      return res.status(500).json({ error: "No predictions returned" });
+    }
+
+    const top = data.predictions[0];
+
+    res.json({
+      shot: top.class,
+      confidence: top.confidence
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
