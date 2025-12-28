@@ -1,8 +1,6 @@
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: "10mb"
-    }
+    bodyParser: false
   }
 };
 
@@ -12,40 +10,42 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Read raw image bytes
     const chunks = [];
     for await (const chunk of req) {
       chunks.push(chunk);
     }
+    const imageBuffer = Buffer.concat(chunks);
 
-    const buffer = Buffer.concat(chunks);
-    const base64Image = buffer.toString("base64");
-
+    // Call Roboflow with RAW bytes (this is the key fix)
     const rfResponse = await fetch(
-      `https://classify.roboflow.com/cricket-shot-type/1?api_key=${process.env.ROBOFLOW_API_KEY}`,
+      "https://classify.roboflow.com/cricket-shot-type/1?api_key=" +
+        process.env.ROBOFLOW_API_KEY,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
+          "Content-Type": "application/octet-stream"
         },
-        body: base64Image
+        body: imageBuffer
       }
     );
 
     const data = await rfResponse.json();
 
-    if (!data.predictions || data.predictions.length === 0) {
-      return res.status(500).json({ error: "No predictions returned" });
+    // Debug safety
+    if (!data || !data.predictions || data.predictions.length === 0) {
+      return res.status(500).json({ error: "No predictions from Roboflow", data });
     }
 
     const top = data.predictions[0];
 
-    res.status(200).json({
+    return res.status(200).json({
       shot: top.class,
       confidence: top.confidence
     });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
