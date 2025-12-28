@@ -12,23 +12,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const buffers = [];
-  for await (const chunk of req) buffers.push(chunk);
-  const imageBuffer = Buffer.concat(buffers);
+  try {
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const imageBuffer = Buffer.concat(chunks);
 
-  const form = new FormData();
-  form.append("file", imageBuffer, "image.jpg");
+    const formData = new FormData();
+    formData.append("file", imageBuffer, "image.jpg");
+    formData.append("model_id", "cricket-shot-type/1");
 
-  const rfResponse = await fetch(
-    `https://classify.roboflow.com/YOUR_PROJECT/YOUR_VERSION?api_key=${process.env.ROBOFLOW_API_KEY}`,
-    { method: "POST", body: form }
-  );
+    const response = await fetch(
+      "https://serverless.roboflow.com/infer/workflows/classification",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.ROBOFLOW_API_KEY}`
+        },
+        body: formData
+      }
+    );
 
-  const data = await rfResponse.json();
-  const top = data.predictions[0];
+    const data = await response.json();
 
-  res.json({
-    shot: top.class,
-    confidence: top.confidence
-  });
+    if (!data.predictions || data.predictions.length === 0) {
+      return res.status(500).json({ error: "No predictions returned" });
+    }
+
+    const top = data.predictions[0];
+
+    return res.json({
+      shot: top.class,
+      confidence: top.confidence
+    });
+
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 }
