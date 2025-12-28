@@ -16,32 +16,26 @@ export default async function handler(req, res) {
     }
     const imageBuffer = Buffer.concat(chunks);
 
-    const formData = new FormData();
-    formData.append(
-      "file",
-      new Blob([imageBuffer]),
-      "image.jpg"
-    );
-
     const response = await fetch(
       `https://classify.roboflow.com/cricket-shot-type/1?api_key=${process.env.ROBOFLOW_API_KEY}`,
       {
         method: "POST",
-        body: formData
+        headers: {
+          "Content-Type": "application/octet-stream"
+        },
+        body: imageBuffer
       }
     );
 
     const data = await response.json();
 
-    const predictions = data.predictions;
+    if (!data.predicted_classes || data.predicted_classes.length === 0) {
+      return res.status(500).json({ error: "No prediction returned" });
+    }
 
-// Get highest confidence class
-    const [shot, confidence] = Object.entries(predictions)
-      .sort((a, b) => b[1] - a[1])[0];
-    
     res.json({
-      shot,
-      confidence
+      shot: data.predicted_classes[0],
+      confidence: data.confidence
     });
 
   } catch (err) {
