@@ -33,11 +33,15 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    const top = data.predictions[0];
+    const predictions = data.predictions;
 
+// Get highest confidence class
+    const [shot, confidence] = Object.entries(predictions)
+      .sort((a, b) => b[1] - a[1])[0];
+    
     res.json({
-      shot: top.class,
-      confidence: top.confidence
+      shot,
+      confidence
     });
 
   } catch (err) {
