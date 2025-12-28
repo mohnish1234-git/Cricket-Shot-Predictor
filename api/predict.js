@@ -10,15 +10,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Read raw image bytes
     const chunks = [];
     for await (const chunk of req) {
       chunks.push(chunk);
     }
     const imageBuffer = Buffer.concat(chunks);
 
-    // Call Roboflow Classification API
-    const rfResponse = await fetch(
+    const response = await fetch(
       "https://classify.roboflow.com/cricket-shot-type/1?api_key=" +
         process.env.ROBOFLOW_API_KEY,
       {
@@ -30,21 +28,12 @@ export default async function handler(req, res) {
       }
     );
 
-    const text = await rfResponse.text(); // DEBUG SAFE
-    let data;
+    const data = await response.json();
 
-    try {
-      data = JSON.parse(text);
-    } catch {
+    // 🔴 IMPORTANT: classification returns an OBJECT, not array
+    if (!data.predictions || typeof data.predictions !== "object") {
       return res.status(500).json({
-        error: "Roboflow returned non-JSON",
-        raw: text
-      });
-    }
-
-    if (!data.predictions || Object.keys(data.predictions).length === 0) {
-      return res.status(500).json({
-        error: "No predictions returned",
+        error: "Invalid Roboflow response",
         data
       });
     }
