@@ -1,7 +1,5 @@
 export const config = {
-  api: {
-    bodyParser: false
-  }
+  api: { bodyParser: false }
 };
 
 export default async function handler(req, res) {
@@ -14,9 +12,10 @@ export default async function handler(req, res) {
     for await (const chunk of req) {
       chunks.push(chunk);
     }
+
     const imageBuffer = Buffer.concat(chunks);
 
-    const response = await fetch(
+    const rfResponse = await fetch(
       "https://classify.roboflow.com/cricket-shot-type/1?api_key=" +
         process.env.ROBOFLOW_API_KEY,
       {
@@ -28,29 +27,21 @@ export default async function handler(req, res) {
       }
     );
 
-    const data = await response.json();
+    const data = await rfResponse.json();
 
-    // 🔴 IMPORTANT: classification returns an OBJECT, not array
-    if (!data.predictions || typeof data.predictions !== "object") {
-      return res.status(500).json({
-        error: "Invalid Roboflow response",
-        data
-      });
+    if (!data.predictions) {
+      return res.status(500).json({ error: "No predictions", data });
     }
 
+    // Roboflow classification returns object of class:confidence
     const sorted = Object.entries(data.predictions)
       .sort((a, b) => b[1] - a[1]);
 
     const [shot, confidence] = sorted[0];
 
-    return res.status(200).json({
-      shot,
-      confidence
-    });
+    return res.status(200).json({ shot, confidence });
 
   } catch (err) {
-    return res.status(500).json({
-      error: err.message
-    });
+    return res.status(500).json({ error: err.message });
   }
 }
