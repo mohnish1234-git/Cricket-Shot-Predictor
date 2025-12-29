@@ -3,7 +3,7 @@ async function predict() {
   const result = document.getElementById("result");
 
   if (!fileInput.files.length) {
-    result.innerText = "Please upload an image";
+    result.innerText = "Please select an image";
     return;
   }
 
@@ -12,18 +12,23 @@ async function predict() {
 
   result.innerText = "Predicting...";
 
-  const response = await fetch("/api/predict", {
-    method: "POST",
-    body: formData
-  });
+  try {
+    const response = await fetch("/api/predict", {
+      method: "POST",
+      body: formData
+    });
 
-  if (!response.ok) {
-    result.innerText = "Prediction failed (server error)";
-    return;
+    const data = await response.json();
+
+    if (data.error) {
+      result.innerText = "Prediction failed: " + data.error;
+      return;
+    }
+
+    result.innerText =
+      `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+
+  } catch (err) {
+    result.innerText = "Server error";
   }
-
-  const data = await response.json();
-
-  result.innerText =
-    `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
 }
