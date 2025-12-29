@@ -5,38 +5,52 @@ async function predict()
     const version = "1";
 
     const file = document.getElementById("imageInput").files[0];
-
     if (!file)
     {
         document.getElementById("result").innerText = "Please select an image";
         return;
     }
 
-    // Upload image to temporary URL
-    const formData = new FormData();
-    formData.append("file", file);
+    const reader = new FileReader();
 
-    const upload = await fetch("https://tmpfiles.org/api/v1/upload", {
-        method: "POST",
-        body: formData
-    });
-
-    const uploadData = await upload.json();
-    const imageUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-
-    // Call Roboflow SERVERLESS endpoint
-    const response = await fetch(
-        `https://serverless.roboflow.com/${model}/${version}?api_key=${apiKey}&image=${encodeURIComponent(imageUrl)}`
-    );
-
-    const data = await response.json();
-
-    if (!data.predictions || data.predictions.length === 0)
+    reader.onload = async () =>
     {
-        document.getElementById("result").innerText = "No shot detected";
-        return;
-    }
+        const base64 = reader.result.split(",")[1];
 
-    document.getElementById("result").innerText =
-        `Predicted Shot: ${data.predictions[0].class} (${(data.predictions[0].confidence * 100).toFixed(2)}%)`;
+        const response = await fetch(
+            `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: base64
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.predictions)
+        {
+            document.getElementById("result").innerText = "Prediction failed";
+            return;
+        }
+
+        let best = "";
+        let bestScore = 0;
+
+        for (const key in data.predictions)
+        {
+            if (data.predictions[key] > bestScore)
+            {
+                bestScore = data.predictions[key];
+                best = key;
+            }
+        }
+
+        document.getElementById("result").innerText =
+            `Predicted Shot: ${best} (${(bestScore * 100).toFixed(2)}%)`;
+    };
+
+    reader.readAsDataURL(file);
 }
