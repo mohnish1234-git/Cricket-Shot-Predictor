@@ -1,41 +1,36 @@
-async function predict() {
-  const fileInput = document.getElementById("imageInput");
-  const result = document.getElementById("result");
+async function predictShot()
+{
+    const apiKey = "UCZKSdlwqm7vmyA9Awun";
+    const model = "cricket-shot-type";
+    const version = "1";
 
-  if (!fileInput.files.length) {
-    result.innerText = "Please choose an image";
-    return;
-  }
+    const fileInput = document.getElementById("inputFile");
+    const file = fileInput.files[0];
 
-  const reader = new FileReader();
-
-  reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1];
-
-    result.innerText = "Predicting...";
-
-    try {
-      const response = await fetch("/api/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ image: base64Image })
-      });
-
-      if (!response.ok) {
-        throw new Error("Server error");
-      }
-
-      const data = await response.json();
-
-      result.innerText =
-        `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
-
-    } catch (err) {
-      result.innerText = "Prediction failed (server error)";
+    if (!file)
+    {
+        document.getElementById("output").innerText = "Please select an image first";
+        return;
     }
-  };
 
-  reader.readAsDataURL(fileInput.files[0]);
+    const response = await fetch(
+        `https://detect.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+        {
+            method: "POST",
+            body: file
+        }
+    );
+
+    const data = await response.json();
+
+    if (data.predictions && data.predictions.length > 0)
+    {
+        document.getElementById("output").innerText =
+            "Predicted Shot: " + data.predictions[0].class;
+    }
+    else
+    {
+        document.getElementById("output").innerText =
+            "No shot detected";
+    }
 }
