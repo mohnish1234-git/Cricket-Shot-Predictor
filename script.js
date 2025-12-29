@@ -1,7 +1,7 @@
 async function predict()
 {
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
-    const model = "cricket-shot-type";
+    const model = "cricket-shot-type/1";
     const version = "1";
 
     const file = document.getElementById("imageInput").files[0];
