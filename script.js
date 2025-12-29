@@ -1,7 +1,4 @@
 async function predict() {
-    const apiKey = "UCZKSdlwqm7vmyA9Awun";
-    const model = "cricket-shot-type";
-    const version = "1";
     const THRESHOLD = 0.3;
     
     const file = document.getElementById("imageInput").files[0];
@@ -18,52 +15,69 @@ async function predict() {
         try {
             const base64Image = reader.result.split(",")[1];
             
-            // Correct Roboflow API endpoint for classification models
-            const response = await fetch(
-                `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: base64Image
-                }
-            );
+            // Call our serverless function instead of Roboflow directly
+            const response = await fetch('/api/predict', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    image: base64Image
+                })
+            });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("API Error:", response.status, errorText);
+                const errorData = await response.json();
+                console.error("API Error:", response.status, errorData);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
             console.log("API Response:", data);
             
-            // For classification models, response structure is different
-            if (!data.predictions || Object.keys(data.predictions).length === 0) {
-                document.getElementById("result").innerText =
-                    "Low confidence. Try a clearer batting-action image.";
-                return;
-            }
-
-            // Find the prediction with highest confidence
-            const predictions = data.predictions;
-            let maxClass = "";
-            let maxConfidence = 0;
-            
-            for (const [className, confidence] of Object.entries(predictions)) {
-                if (confidence > maxConfidence) {
-                    maxConfidence = confidence;
-                    maxClass = className;
+            // Handle response based on model type
+            if (data.predictions) {
+                // Check if it's an array (object detection) or object (classification)
+                if (Array.isArray(data.predictions)) {
+                    // Object detection response
+                    if (data.predictions.length === 0) {
+                        document.getElementById("result").innerText =
+                            "Low confidence. Try a clearer batting-action image.";
+                        return;
+                    }
+                    
+                    const prediction = data.predictions[0];
+                    if (prediction.confidence < THRESHOLD) {
+                        document.getElementById("result").innerText =
+                            "Low confidence. Try a clearer batting-action image.";
+                    } else {
+                        document.getElementById("result").innerText =
+                            `Predicted Shot: ${prediction.class} (${(prediction.confidence * 100).toFixed(2)}%)`;
+                    }
+                } else {
+                    // Classification response
+                    const predictions = data.predictions;
+                    let maxClass = "";
+                    let maxConfidence = 0;
+                    
+                    for (const [className, confidence] of Object.entries(predictions)) {
+                        if (confidence > maxConfidence) {
+                            maxConfidence = confidence;
+                            maxClass = className;
+                        }
+                    }
+                    
+                    if (maxConfidence < THRESHOLD) {
+                        document.getElementById("result").innerText =
+                            "Low confidence. Try a clearer batting-action image.";
+                    } else {
+                        document.getElementById("result").innerText =
+                            `Predicted Shot: ${maxClass} (${(maxConfidence * 100).toFixed(2)}%)`;
+                    }
                 }
-            }
-            
-            if (maxConfidence < THRESHOLD) {
-                document.getElementById("result").innerText =
-                    "Low confidence. Try a clearer batting-action image.";
             } else {
                 document.getElementById("result").innerText =
-                    `Predicted Shot: ${maxClass} (${(maxConfidence * 100).toFixed(2)}%)`;
+                    "Unexpected response format. Check console.";
             }
         } catch (error) {
             console.error("Error:", error);
