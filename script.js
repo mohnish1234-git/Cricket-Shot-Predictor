@@ -18,17 +18,16 @@ async function predict() {
       body: formData
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      result.innerText = "Prediction failed: " + data.error;
-      return;
+    if (!response.ok) {
+      throw new Error("Server error");
     }
+
+    const data = await response.json();
 
     result.innerText =
       `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
 
   } catch (err) {
-    result.innerText = "Server error";
+    result.innerText = "Prediction failed (server error)";
   }
 }
