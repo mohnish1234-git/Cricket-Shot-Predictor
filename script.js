@@ -3,7 +3,7 @@ async function predict()
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
     const model = "cricket-shot-type";
     const version = "1";
-    const THRESHOLD = 0.5;
+    const THRESHOLD = 0.3; // realistic for infer endpoint
 
     const file = document.getElementById("imageInput").files[0];
     if (!file)
@@ -18,56 +18,40 @@ async function predict()
     {
         const base64Image = reader.result.split(",")[1];
 
-        try
-        {
-            const response = await fetch(
-                `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+        const response = await fetch(
+            `https://infer.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+            {
+                method: "POST",
+                headers:
                 {
-                    method: "POST",
-                    headers:
-                    {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: base64Image
-                }
-            );
-
-            if (!response.ok)
-            {
-                document.getElementById("result").innerText =
-                    "Request failed. Try again.";
-                return;
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    image: base64Image
+                })
             }
+        );
 
-            const data = await response.json();
+        const data = await response.json();
 
-            let bestClass = "";
-            let bestScore = 0;
-
-            for (const cls in data.predictions)
-            {
-                if (data.predictions[cls] > bestScore)
-                {
-                    bestScore = data.predictions[cls];
-                    bestClass = cls;
-                }
-            }
-
-            if (bestScore < THRESHOLD)
-            {
-                document.getElementById("result").innerText =
-                    "Low confidence. Try a clearer batting-action image.";
-            }
-            else
-            {
-                document.getElementById("result").innerText =
-                    `Predicted Shot: ${bestClass} (${(bestScore * 100).toFixed(2)}%)`;
-            }
-        }
-        catch (err)
+        if (!data.predictions || data.predictions.length === 0)
         {
             document.getElementById("result").innerText =
-                "Unexpected error. Refresh and try again.";
+                "Low confidence. Try a clearer batting-action image.";
+            return;
+        }
+
+        const prediction = data.predictions[0];
+
+        if (prediction.confidence < THRESHOLD)
+        {
+            document.getElementById("result").innerText =
+                "Low confidence. Try a clearer batting-action image.";
+        }
+        else
+        {
+            document.getElementById("result").innerText =
+                `Predicted Shot: ${prediction.class} (${(prediction.confidence * 100).toFixed(2)}%)`;
         }
     };
 
