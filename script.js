@@ -7,6 +7,7 @@ async function predict() {
     return;
   }
 
+  
   const formData = new FormData();
   formData.append("file", fileInput.files[0]);
 
