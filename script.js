@@ -3,32 +3,39 @@ async function predict() {
   const result = document.getElementById("result");
 
   if (!fileInput.files.length) {
-    result.innerText = "Please select an image";
+    result.innerText = "Please choose an image";
     return;
   }
 
-  
-  const formData = new FormData();
-  formData.append("file", fileInput.files[0]);
+  const reader = new FileReader();
 
-  result.innerText = "Predicting...";
+  reader.onload = async () => {
+    const base64Image = reader.result.split(",")[1];
 
-  try {
-    const response = await fetch("/api/predict", {
-      method: "POST",
-      body: formData
-    });
+    result.innerText = "Predicting...";
 
-    if (!response.ok) {
-      throw new Error("Server error");
+    try {
+      const response = await fetch("/api/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ image: base64Image })
+      });
+
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      const data = await response.json();
+
+      result.innerText =
+        `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+
+    } catch (err) {
+      result.innerText = "Prediction failed (server error)";
     }
+  };
 
-    const data = await response.json();
-
-    result.innerText =
-      `Shot: ${data.shot} | Confidence: ${(data.confidence * 100).toFixed(1)}%`;
-
-  } catch (err) {
-    result.innerText = "Prediction failed (server error)";
-  }
+  reader.readAsDataURL(fileInput.files[0]);
 }
