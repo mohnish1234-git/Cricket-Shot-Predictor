@@ -3,6 +3,7 @@ async function predict()
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
     const model = "cricket-shot-type";
     const version = "1";
+    
 
     const fileInput = document.getElementById("imageInput");
     const file = fileInput.files[0];
