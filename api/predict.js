@@ -25,13 +25,13 @@ export default async function handler(req, res) {
             return;
         }
 
-        const apiKey = "UCZKSdlwqm7vmyA9Awun";
+        const apiKey = process.env.ROBOFLOW_API_KEY || "UCZKSdlwqm7vmyA9Awun";
         const model = "cricket-shot-type";
         const version = "1";
 
-        // Call Roboflow API
-        const response = await fetch(
-            `https://infer.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+        // Try detect endpoint (for object detection models)
+        let response = await fetch(
+            `https://detect.roboflow.com/${model}/${version}?api_key=${apiKey}`,
             {
                 method: "POST",
                 headers: {
@@ -40,6 +40,36 @@ export default async function handler(req, res) {
                 body: image
             }
         );
+
+        // If detect fails with 405, try classify endpoint
+        if (response.status === 405) {
+            console.log('Detect endpoint failed, trying classify...');
+            response = await fetch(
+                `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: image
+                }
+            );
+        }
+
+        // If still 405, try outline endpoint (for instance segmentation)
+        if (response.status === 405) {
+            console.log('Classify endpoint failed, trying outline...');
+            response = await fetch(
+                `https://outline.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: image
+                }
+            );
+        }
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -53,6 +83,7 @@ export default async function handler(req, res) {
         }
 
         const data = await response.json();
+        console.log('Roboflow response:', data);
         res.status(200).json(data);
 
     } catch (error) {
