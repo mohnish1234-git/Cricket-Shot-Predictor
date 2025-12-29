@@ -15,6 +15,8 @@ async function predict() {
         try {
             const base64Image = reader.result.split(",")[1];
             
+            console.log("Sending request to /api/predict...");
+            
             // Call our serverless function instead of Roboflow directly
             const response = await fetch('/api/predict', {
                 method: "POST",
@@ -27,9 +29,9 @@ async function predict() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error("API Error:", response.status, errorData);
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                console.error("API Error Response:", response.status, errorData);
+                throw new Error(`API returned ${response.status}: ${JSON.stringify(errorData)}`);
             }
 
             const data = await response.json();
@@ -82,7 +84,7 @@ async function predict() {
         } catch (error) {
             console.error("Error:", error);
             document.getElementById("result").innerText =
-                "Error making prediction. Please try again or check console for details.";
+                `Error: ${error.message}. Check console for details.`;
         }
     };
     
