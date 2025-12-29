@@ -3,10 +3,8 @@ async function predict()
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
     const model = "cricket-shot-type";
     const version = "1";
-    
 
-    const fileInput = document.getElementById("imageInput");
-    const file = fileInput.files[0];
+    const file = document.getElementById("imageInput").files[0];
 
     if (!file)
     {
@@ -14,39 +12,31 @@ async function predict()
         return;
     }
 
-    const reader = new FileReader();
+    // Upload image to temporary URL
+    const formData = new FormData();
+    formData.append("file", file);
 
-    reader.onloadend = async function ()
+    const upload = await fetch("https://tmpfiles.org/api/v1/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const uploadData = await upload.json();
+    const imageUrl = uploadData.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+
+    // Call Roboflow SERVERLESS endpoint
+    const response = await fetch(
+        `https://serverless.roboflow.com/${model}/${version}?api_key=${apiKey}&image=${encodeURIComponent(imageUrl)}`
+    );
+
+    const data = await response.json();
+
+    if (!data.predictions || data.predictions.length === 0)
     {
-        const base64Image = reader.result.split(",")[1];
+        document.getElementById("result").innerText = "No shot detected";
+        return;
+    }
 
-        const response = await fetch(
-            `https://infer.roboflow.com/${model}/${version}?api_key=${apiKey}`,
-            {
-                method: "POST",
-                headers:
-                {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    image: base64Image
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        if (!data.predictions || data.predictions.length === 0)
-        {
-            document.getElementById("result").innerText = "No shot detected";
-            return;
-        }
-
-        const prediction = data.predictions[0];
-
-        document.getElementById("result").innerText =
-            `Predicted Shot: ${prediction.class} (${(prediction.confidence * 100).toFixed(2)}%)`;
-    };
-
-    reader.readAsDataURL(file);
+    document.getElementById("result").innerText =
+        `Predicted Shot: ${data.predictions[0].class} (${(data.predictions[0].confidence * 100).toFixed(2)}%)`;
 }
