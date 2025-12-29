@@ -1,6 +1,6 @@
 async function predict()
 {
-    const apiKey = "PASTE_YOUR_API_KEY_HERE";
+    const apiKey = "UCZKSdlwqm7vmyA9Awun";
     const model = "cricket-shot-type";
     const version = "1";
 
