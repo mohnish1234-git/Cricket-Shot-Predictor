@@ -5,11 +5,22 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="container">
+    <h1>Cricket Shot Predictor</h1>
+    <p class="subtitle">AI-based cricket batting shot classification</p>
 
-<h1>Cricket Shot Predictor</h1>
+    <div class="upload-card">
+        <label class="file-label">
+            <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+            Choose Image
+        </label>
 
-<input type="file" id="imageInput" accept="image/*">
-<button onclick="predict()">Predict Shot</button>
+        <div class="image-preview">
+            <img id="preview" alt="Preview will appear here">
+        </div>
+
+        <button class="predict-btn" onclick="predict()">Predict Shot</button>
+
 
 <p id="result"></p>
 
