@@ -1,4 +1,4 @@
 {
   "name": "cricket-shot-predictor",
-  "type": "module"
+  "private": true
 }
