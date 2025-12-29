@@ -1,19 +1,14 @@
-export const config = {
-  api: { bodyParser: false }
-};
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const chunks = [];
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
+    const { image } = req.body;
 
-    const imageBuffer = Buffer.concat(chunks);
+    if (!image) {
+      return res.status(400).json({ error: "No image provided" });
+    }
 
     const rfResponse = await fetch(
       "https://classify.roboflow.com/cricket-shot-type/1?api_key=" +
@@ -21,27 +16,26 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/octet-stream"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: imageBuffer
+        body: image
       }
     );
 
     const data = await rfResponse.json();
 
-    if (!data.predictions) {
-      return res.status(500).json({ error: "No predictions", data });
+    if (!data.predictions || data.predictions.length === 0) {
+      return res.status(500).json({ error: "No predictions" });
     }
 
-    // Roboflow classification returns object of class:confidence
-    const sorted = Object.entries(data.predictions)
-      .sort((a, b) => b[1] - a[1]);
+    const top = data.predictions[0];
 
-    const [shot, confidence] = sorted[0];
-
-    return res.status(200).json({ shot, confidence });
+    res.status(200).json({
+      shot: top.class,
+      confidence: top.confidence
+    });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
