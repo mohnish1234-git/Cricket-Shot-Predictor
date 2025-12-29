@@ -2,8 +2,8 @@ async function predict()
 {
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
     const model = "cricket-shot-type";
-    const version = "1"; // old model (v1)
-    const THRESHOLD = 0.5; // 50% confidence
+    const version = "1";
+    const THRESHOLD = 0.5;
 
     const file = document.getElementById("imageInput").files[0];
     if (!file)
@@ -16,48 +16,58 @@ async function predict()
 
     reader.onload = async () =>
     {
-        const base64 = reader.result.split(",")[1];
+        const base64Image = reader.result.split(",")[1];
 
-        const response = await fetch(
-            `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: base64
-            }
-        );
-
-        const data = await response.json();
-
-        if (!data.predictions)
+        try
         {
-            document.getElementById("result").innerText = "Prediction failed";
-            return;
-        }
+            const response = await fetch(
+                `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers:
+                    {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: base64Image
+                }
+            );
 
-        let bestClass = "";
-        let bestScore = 0;
-
-        for (const cls in data.predictions)
-        {
-            if (data.predictions[cls] > bestScore)
+            if (!response.ok)
             {
-                bestScore = data.predictions[cls];
-                bestClass = cls;
+                document.getElementById("result").innerText =
+                    "Request failed. Try again.";
+                return;
+            }
+
+            const data = await response.json();
+
+            let bestClass = "";
+            let bestScore = 0;
+
+            for (const cls in data.predictions)
+            {
+                if (data.predictions[cls] > bestScore)
+                {
+                    bestScore = data.predictions[cls];
+                    bestClass = cls;
+                }
+            }
+
+            if (bestScore < THRESHOLD)
+            {
+                document.getElementById("result").innerText =
+                    "Low confidence. Try a clearer batting-action image.";
+            }
+            else
+            {
+                document.getElementById("result").innerText =
+                    `Predicted Shot: ${bestClass} (${(bestScore * 100).toFixed(2)}%)`;
             }
         }
-
-        if (bestScore < THRESHOLD)
+        catch (err)
         {
             document.getElementById("result").innerText =
-                "Low confidence. Try a clearer batting-action image.";
-        }
-        else
-        {
-            document.getElementById("result").innerText =
-                `Predicted Shot: ${bestClass} (${(bestScore * 100).toFixed(2)}%)`;
+                "Unexpected error. Refresh and try again.";
         }
     };
 
