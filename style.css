@@ -102,3 +102,28 @@ h1 {
     min-height: 20px;
     color: #333;
 }
+.title-bar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 26px;
+    margin-right: 10px;
+}
+
+.container {
+    margin-top: 90px; /* space below title bar */
+}
+
