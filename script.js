@@ -1,8 +1,8 @@
 async function predict()
 {
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
-    const model = "cricket-shot-type/1";
-    const version = "1";
+    const model = "cricket-shot-type";
+    const version = "1"; // <-- OLD MODEL (v1)
 
     const file = document.getElementById("imageInput").files[0];
     if (!file)
@@ -36,20 +36,20 @@ async function predict()
             return;
         }
 
-        let best = "";
+        let bestClass = "";
         let bestScore = 0;
 
-        for (const key in data.predictions)
+        for (const cls in data.predictions)
         {
-            if (data.predictions[key] > bestScore)
+            if (data.predictions[cls] > bestScore)
             {
-                bestScore = data.predictions[key];
-                best = key;
+                bestScore = data.predictions[cls];
+                bestClass = cls;
             }
         }
 
         document.getElementById("result").innerText =
-            `Predicted Shot: ${best} (${(bestScore * 100).toFixed(2)}%)`;
+            `Predicted Shot: ${bestClass} (${(bestScore * 100).toFixed(2)}%)`;
     };
 
     reader.readAsDataURL(file);
