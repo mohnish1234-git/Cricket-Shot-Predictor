@@ -60,12 +60,12 @@ h1 {
 
 .image-preview {
     width: 100%;
-    height: 240px;
+    height: 280px;              /* THIS WAS MISSING */
     border: 2px dashed #ccc;
     border-radius: 10px;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     overflow: hidden;
     background: #fafafa;
 }
@@ -73,8 +73,10 @@ h1 {
 .image-preview img {
     max-width: 100%;
     max-height: 100%;
+    object-fit: contain;
     display: none;
 }
+
 
 .predict-btn {
     background: #43a047;
@@ -105,25 +107,26 @@ h1 {
 .title-bar {
     position: fixed;
     top: 0;
-    width: 100%;
-    height: 60px;
+    left: 0;
+    width: 100vw;
+    height: 64px;
     background: linear-gradient(90deg, #1e3c72, #2a5298);
     color: white;
     display: flex;
     align-items: center;
-    padding-left: 20px;
+    padding: 0 24px;
     font-size: 20px;
     font-weight: 600;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
     z-index: 1000;
 }
 
 .logo {
     font-size: 26px;
-    margin-right: 10px;
+    margin-right: 12px;
 }
 
 .container {
-    margin-top: 90px; /* space below title bar */
+    margin-top: 100px; /* space below header */
 }
 
