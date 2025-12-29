@@ -2,7 +2,8 @@ async function predict()
 {
     const apiKey = "UCZKSdlwqm7vmyA9Awun";
     const model = "cricket-shot-type";
-    const version = "1"; // <-- OLD MODEL (v1)
+    const version = "1"; // old model (v1)
+    const THRESHOLD = 0.5; // 50% confidence
 
     const file = document.getElementById("imageInput").files[0];
     if (!file)
@@ -48,8 +49,16 @@ async function predict()
             }
         }
 
-        document.getElementById("result").innerText =
-            `Predicted Shot: ${bestClass} (${(bestScore * 100).toFixed(2)}%)`;
+        if (bestScore < THRESHOLD)
+        {
+            document.getElementById("result").innerText =
+                "Low confidence. Try a clearer batting-action image.";
+        }
+        else
+        {
+            document.getElementById("result").innerText =
+                `Predicted Shot: ${bestClass} (${(bestScore * 100).toFixed(2)}%)`;
+        }
     };
 
     reader.readAsDataURL(file);
