@@ -14,7 +14,7 @@ async function predictShot()
     }
 
     const response = await fetch(
-        `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+        "https://serverless.roboflow.com/cricket-shot-type/1",
         {
             method: "POST",
             body: file
