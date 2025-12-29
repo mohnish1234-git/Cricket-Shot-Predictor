@@ -14,7 +14,7 @@ async function predictShot()
     }
 
     const response = await fetch(
-        `https://detect.roboflow.com/${model}/${version}?api_key=${apiKey}`,
+        `https://classify.roboflow.com/${model}/${version}?api_key=${apiKey}`,
         {
             method: "POST",
             body: file
