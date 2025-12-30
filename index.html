@@ -1,34 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cricket Shot Predictor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="title-bar">
-    <span class="logo">🏏</span>
-    <span class="title-text">Cricket Shot Predictor</span>
-</header>
-<div class="container">
-    <h1>Cricket Shot Predictor</h1>
-    <p class="subtitle">AI-based cricket batting shot classification</p>
+    <div class="container">
+        <h1>Cricket Shot Predictor</h1>
+        <p class="subtitle">AI-based cricket batting shot classification</p>
+        
+        <div class="upload-section">
+            <input type="file" id="imageInput" accept="image/jpeg,image/jpg,image/png" style="display: none;">
+            <button class="upload-btn" onclick="document.getElementById('imageInput').click()">Choose Image</button>
+            <p class="file-name" id="fileName">No file chosen</p>
+        </div>
 
-    <div class="upload-card">
-        <label class="file-label">
-            <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
-            Choose Image
-        </label>
-
-        <div class="image-preview">
-            <img id="preview" alt="Preview will appear here">
+        <div class="preview-container" id="previewContainer" style="display: none;">
+            <img id="imagePreview" alt="Preview">
         </div>
 
         <button class="predict-btn" onclick="predict()">Predict Shot</button>
 
+        <div class="result-container">
+            <div id="result"></div>
+        </div>
+    </div>
 
-<p id="result"></p>
-
-<script src="script.js"></script>
-
+    <script src="script.js"></script>
+    <script>
+        // Show file name and preview when image is selected
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    const container = document.getElementById('previewContainer');
+                    preview.src = e.target.result;
+                    container.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
 </body>
 </html>
