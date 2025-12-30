@@ -2,25 +2,13 @@ async function predict() {
     const THRESHOLD = 0.3;
     
     const file = document.getElementById("imageInput").files[0];
-    const resultDiv = document.getElementById("result");
-    
     if (!file) {
-        resultDiv.className = "error";
-        resultDiv.innerHTML = "⚠️ Please select an image first";
-        return;
-    }
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    if (!validTypes.includes(file.type)) {
-        resultDiv.className = "error";
-        resultDiv.innerHTML = "⚠️ Please upload a JPEG or PNG image";
+        document.getElementById("result").innerText = "Please select an image";
         return;
     }
 
     // Show loading message
-    resultDiv.className = "loading";
-    resultDiv.innerHTML = "🏏 Analyzing cricket shot...";
+    document.getElementById("result").innerText = "Analyzing image...";
 
     const reader = new FileReader();
     reader.onload = async () => {
@@ -55,22 +43,18 @@ async function predict() {
                 if (Array.isArray(data.predictions)) {
                     // Object detection response
                     if (data.predictions.length === 0) {
-                        resultDiv.className = "low-confidence";
-                        resultDiv.innerHTML = "⚠️ No shot detected. Try a clearer batting-action image.";
+                        document.getElementById("result").innerText =
+                            "Low confidence. Try a clearer batting-action image.";
                         return;
                     }
                     
                     const prediction = data.predictions[0];
                     if (prediction.confidence < THRESHOLD) {
-                        resultDiv.className = "low-confidence";
-                        resultDiv.innerHTML = "⚠️ Low confidence. Try a clearer batting-action image.";
+                        document.getElementById("result").innerText =
+                            "Low confidence. Try a clearer batting-action image.";
                     } else {
-                        resultDiv.className = "success";
-                        resultDiv.innerHTML = `
-                            <div>✅ Prediction Complete!</div>
-                            <div class="shot-name">${prediction.class}</div>
-                            <div class="confidence">Confidence: ${(prediction.confidence * 100).toFixed(1)}%</div>
-                        `;
+                        document.getElementById("result").innerText =
+                            `Predicted Shot: ${prediction.class} (${(prediction.confidence * 100).toFixed(2)}%)`;
                     }
                 } else {
                     // Classification response
@@ -86,28 +70,38 @@ async function predict() {
                     }
                     
                     if (maxConfidence < THRESHOLD) {
-                        resultDiv.className = "low-confidence";
-                        resultDiv.innerHTML = "⚠️ Low confidence. Try a clearer batting-action image.";
+                        document.getElementById("result").innerText =
+                            "Low confidence. Try a clearer batting-action image.";
                     } else {
-                        resultDiv.className = "success";
-                        resultDiv.innerHTML = `
-                            <div>✅ Prediction Complete!</div>
-                            <div class="shot-name">${maxClass}</div>
-                            <div class="confidence">Confidence: ${(maxConfidence * 100).toFixed(1)}%</div>
-                        `;
+                        document.getElementById("result").innerText =
+                            `Predicted Shot: ${maxClass} (${(maxConfidence * 100).toFixed(2)}%)`;
                     }
                 }
             } else {
-                resultDiv.className = "error";
-                resultDiv.innerHTML = "❌ Unexpected response format. Check console.";
+                document.getElementById("result").innerText =
+                    "Unexpected response format. Check console.";
             }
         } catch (error) {
             console.error("Error:", error);
-            resultDiv.className = "error";
-            resultDiv.innerHTML = `❌ ${error.message}`;
+            document.getElementById("result").innerText =
+                `Error: ${error.message}. Check console for details.`;
         }
     };
     
     reader.readAsDataURL(file);
 }
-}
+// Show image preview when file is selected
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('imagePreview');
+            const previewBox = document.getElementById('previewBox');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            previewBox.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+    }
+});
