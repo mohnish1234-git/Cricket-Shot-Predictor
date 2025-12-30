@@ -2,13 +2,25 @@ async function predict() {
     const THRESHOLD = 0.3;
     
     const file = document.getElementById("imageInput").files[0];
+    const resultDiv = document.getElementById("result");
+    
     if (!file) {
-        document.getElementById("result").innerText = "Please select an image";
+        resultDiv.className = "error";
+        resultDiv.innerHTML = "⚠️ Please select an image first";
+        return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+        resultDiv.className = "error";
+        resultDiv.innerHTML = "⚠️ Please upload a JPEG or PNG image";
         return;
     }
 
     // Show loading message
-    document.getElementById("result").innerText = "Analyzing image...";
+    resultDiv.className = "loading";
+    resultDiv.innerHTML = "🏏 Analyzing cricket shot...";
 
     const reader = new FileReader();
     reader.onload = async () => {
@@ -43,18 +55,22 @@ async function predict() {
                 if (Array.isArray(data.predictions)) {
                     // Object detection response
                     if (data.predictions.length === 0) {
-                        document.getElementById("result").innerText =
-                            "Low confidence. Try a clearer batting-action image.";
+                        resultDiv.className = "low-confidence";
+                        resultDiv.innerHTML = "⚠️ No shot detected. Try a clearer batting-action image.";
                         return;
                     }
                     
                     const prediction = data.predictions[0];
                     if (prediction.confidence < THRESHOLD) {
-                        document.getElementById("result").innerText =
-                            "Low confidence. Try a clearer batting-action image.";
+                        resultDiv.className = "low-confidence";
+                        resultDiv.innerHTML = "⚠️ Low confidence. Try a clearer batting-action image.";
                     } else {
-                        document.getElementById("result").innerText =
-                            `Predicted Shot: ${prediction.class} (${(prediction.confidence * 100).toFixed(2)}%)`;
+                        resultDiv.className = "success";
+                        resultDiv.innerHTML = `
+                            <div>✅ Prediction Complete!</div>
+                            <div class="shot-name">${prediction.class}</div>
+                            <div class="confidence">Confidence: ${(prediction.confidence * 100).toFixed(1)}%</div>
+                        `;
                     }
                 } else {
                     // Classification response
@@ -70,23 +86,28 @@ async function predict() {
                     }
                     
                     if (maxConfidence < THRESHOLD) {
-                        document.getElementById("result").innerText =
-                            "Low confidence. Try a clearer batting-action image.";
+                        resultDiv.className = "low-confidence";
+                        resultDiv.innerHTML = "⚠️ Low confidence. Try a clearer batting-action image.";
                     } else {
-                        document.getElementById("result").innerText =
-                            `Predicted Shot: ${maxClass} (${(maxConfidence * 100).toFixed(2)}%)`;
+                        resultDiv.className = "success";
+                        resultDiv.innerHTML = `
+                            <div>✅ Prediction Complete!</div>
+                            <div class="shot-name">${maxClass}</div>
+                            <div class="confidence">Confidence: ${(maxConfidence * 100).toFixed(1)}%</div>
+                        `;
                     }
                 }
             } else {
-                document.getElementById("result").innerText =
-                    "Unexpected response format. Check console.";
+                resultDiv.className = "error";
+                resultDiv.innerHTML = "❌ Unexpected response format. Check console.";
             }
         } catch (error) {
             console.error("Error:", error);
-            document.getElementById("result").innerText =
-                `Error: ${error.message}. Check console for details.`;
+            resultDiv.className = "error";
+            resultDiv.innerHTML = `❌ ${error.message}`;
         }
     };
     
     reader.readAsDataURL(file);
+}
 }
